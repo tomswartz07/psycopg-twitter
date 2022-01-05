@@ -3,6 +3,7 @@
 # encoding: utf-8
 
 import csv
+import json
 import tweepy #https://github.com/tweepy/tweepy
 
 #Twitter API credentials
@@ -18,13 +19,13 @@ def get_all_tweets(screen_name):
     #authorize twitter, initialize tweepy
     auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_key, access_secret)
-    api = tweepy.API(auth)
+    api = tweepy.API(auth,wait_on_rate_limit=True)
 
     #initialize a list to hold all the tweepy Tweets
     alltweets = []
 
     #make initial request for most recent tweets (200 is the maximum allowed count)
-    new_tweets = api.favorites(screen_name=screen_name, count=200)
+    new_tweets = api.get_favorites(screen_name=screen_name, count=200)
 
     #save most recent tweets
     alltweets.extend(new_tweets)
@@ -37,7 +38,7 @@ def get_all_tweets(screen_name):
         #print("getting tweets before %s" % (oldest))
 
         #all subsiquent requests use the max_id param to prevent duplicates
-        new_tweets = api.favorites(screen_name=screen_name, count=200, max_id=oldest)
+        new_tweets = api.get_favorites(screen_name=screen_name, count=200, max_id=oldest)
 
         #save most recent tweets
         alltweets.extend(new_tweets)
@@ -50,7 +51,7 @@ def get_all_tweets(screen_name):
 
     #transform the tweepy tweets into a 2D array that will populate the csv
     outtweets = [[tweet.id_str, tweet.created_at, tweet.user.screen_name, tweet.user.name,
-                  tweet.text.encode("utf-8")] for tweet in alltweets]
+                  tweet.text] for tweet in alltweets]
 
     #write the csv
     with open('/home/tom/git/python-twitter/%s_favorite_tweets.csv' % screen_name, 'w') as f:
